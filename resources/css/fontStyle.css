@@ -1,0 +1,7 @@
+@font-face {
+    src: url('resources/css/Bungee-Regular.ttf');
+}
+
+.startThing {
+    -fx-font-family: 'Fleftex';
+}
