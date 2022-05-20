@@ -21,12 +21,17 @@ import javafx.scene.paint.Color;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
 class pair {
     int a, b;
     pair(int x, int y) {
         a = x; b = y;
+    }
+    @Override
+    public String toString() {
+        return "x:" + a + " y:" + b; 
     }
 }
 public class ekans extends Application {
@@ -37,22 +42,31 @@ public class ekans extends Application {
     public Rectangle background,a;
     public Button b;
     public int AppleX = -1, AppleY = -1;
-
+    public ArrayList<pair> unoccupied = new ArrayList<>();
+    public int NumOfTiles = 11;
+    public boolean win = false;
     /*
      * Method for spawnning apples. 
     */
+    public void removeUnoccupied(pair p ){
+        for(int i = 0; i < unoccupied.size();i++){
+            pair pa = unoccupied.get(i);
+            if(pa.a == p.a && pa.b == p.b){
+                unoccupied.remove(i);
+                break;
+            }
+        }
+    }
     public void spawnApple(Pane p){
 
+            System.out.println(unoccupied.toString());
             Random r = new Random();
-            boolean overlapSnake = false;
 
-            // not used?
-            ArrayList<pair> arr = new ArrayList<>();
-            do {
-                AppleX = r.nextInt(17)*40;
-                AppleY = r.nextInt(17)*40;
-            }
-            while(overlapSnake);
+            
+            int n = r.nextInt(unoccupied.size());
+            AppleX = unoccupied.get(n).a;
+            AppleY = unoccupied.get(n).b;
+
             a = new Rectangle(AppleX,AppleY,40,40);
             a.setFill(Color.GREEN);
             p.getChildren().add(a);
@@ -67,31 +81,38 @@ public class ekans extends Application {
         Pane layoutStart = new Pane();
         Pane layoutRules = new Pane();
 
-        Scene startScene = new Scene(layoutStart, 40*17, 40*17);
-        Scene gameScene = new Scene(layout, 40*17, 40*17);
-        Scene viewRules = new Scene (layoutRules, 40*17, 40*17);
+        Scene startScene = new Scene(layoutStart, 40*NumOfTiles, 40*NumOfTiles);
+        Scene gameScene = new Scene(layout, 40*NumOfTiles, 40*NumOfTiles);
+        Scene viewRules = new Scene (layoutRules, 40*NumOfTiles, 40*NumOfTiles);
 
-        Label startThing = new Label("SNAKE");
+
 
         Button startGame = new Button("Start Game");
         Button lookAtRules = new Button("View Rules");
+        Button backToMenu = new Button("Menu");
         /*
          * im gonna scream
         */
-        //startScene.getStylesheets().add(getClass().getResource("/resources/css/fontStyle.css").toExternalForm());
 
-        startThing.setTextAlignment(TextAlignment.CENTER);
-        startThing.relocate(280, 200);
+
+        backToMenu.setPrefSize(300, 50);
+        backToMenu.relocate(50, 340);
 
         startGame.setPrefSize(300, 50);
-        startGame.relocate(200, 340);
+        startGame.relocate(50, 340);
 
         lookAtRules.setPrefSize(300, 50);
-        lookAtRules.relocate(200, 200);
+        lookAtRules.relocate(50, 200);
 
-        layoutStart.getChildren().add(startThing);
+
         layoutStart.getChildren().add(startGame);
         layoutStart.getChildren().add(lookAtRules);
+        layoutRules.getChildren().add(backToMenu);
+        Text text = new Text();      
+        text.setText("-arrows keys to move \n\n - if the head of the snake hits the edge or itself, game ends. \n\n -There is always 1 apple on the field, which increases snake length by 1. \n\n -once the entire board is filled with the snake, the player wins."); 
+        text.setX(50); 
+        text.setY(50);
+        layoutRules.getChildren().addAll(text);
 
         /*
          * An attempt to create the window in the middle of the screen,
@@ -99,12 +120,13 @@ public class ekans extends Application {
         */
         primaryStage.setX((screenBounds.getWidth() - primaryStage.getWidth()) / 2);
         primaryStage.setY((screenBounds.getHeight() - primaryStage.getHeight()) / 2);  
+        
         primaryStage.setScene(startScene);
         primaryStage.setResizable(false);
 
         primaryStage.show();
 
-        background = new Rectangle(0,0,40*17,40*17);
+        background = new Rectangle(0,0,40*NumOfTiles,40*NumOfTiles);
         background.setFill(Color.RED);
         layout.getChildren().add(background);
         
@@ -113,8 +135,17 @@ public class ekans extends Application {
         lookAtRules.setOnAction(event -> {
             primaryStage.setScene(viewRules);
         });
+
+        backToMenu.setOnAction(event -> {
+            primaryStage.setScene(startScene);
+        });
         startGame.setOnAction(event -> {
-            
+            win = false;
+            for(int i =0; i< NumOfTiles;i++){
+                for(int k = 0; k < NumOfTiles;k++){
+                    unoccupied.add(new pair(40*i,40*k));
+                }
+            }
             primaryStage.setScene(gameScene);
 
             if (b != null) layout.getChildren().remove(b);
@@ -143,13 +174,15 @@ public class ekans extends Application {
                 }
             });
             
-            spawnApple(layout);
-            Rectangle rect = new Rectangle(8*40, 8*40, 40, 40);
+
+            Rectangle rect = new Rectangle((NumOfTiles)/2*40, (NumOfTiles)/2 *40, 40, 40);
             
             snake.add(rect);
+            removeUnoccupied(new pair((int)rect.getX(), (int)rect.getY()));
+
             headDirection = 'U';
             buttonSpawned = false;
-           
+            spawnApple(layout);
             layout.getChildren().add(rect);
             AnimationTimer timer = new MyTimer(layout,primaryStage, startScene);
             timer.start();
@@ -169,7 +202,6 @@ public class ekans extends Application {
             layout = p;
             s = st;
             startSc = g;
-            
         }
 
         public void handle(long a) {
@@ -178,13 +210,11 @@ public class ekans extends Application {
         }
 
         private void fun() {
-            /*
-             * Checks if snake's head (index 0) is equal to the X & Y coordinates of an apple. 
-             * Increases score by one if condition is met.
-             * 
-             * Removes apple once eaten and spawns a new apple (spawnApple)
-             * 
-            */
+            if(unoccupied.size() == 0){
+                win = true;
+            }
+
+
             if (snake.get(0).getX() == AppleX && snake.get(0).getY() == AppleY ) {
                 score++;
                 layout.getChildren().remove(a);
@@ -196,7 +226,7 @@ public class ekans extends Application {
                     colllided = true;
             }
             if (snake.size() > 1) {
-                if (snake.get(0).getX() < 0 || snake.get(0).getX() > 40*16 || snake.get(0).getY() < 0 || snake.get(0).getY()> 40*16)
+                if (snake.get(0).getX() < 0 || snake.get(0).getX() > 40*(NumOfTiles-1) || snake.get(0).getY() < 0 || snake.get(0).getY()> 40*(NumOfTiles-1))
                 colllided = true;
             }
             /*
@@ -208,7 +238,7 @@ public class ekans extends Application {
                 if (buttonSpawned) {} else {
                     buttonSpawned = true;
 
-                    b = new Button("retry, score is: " + score);
+                    b = new Button( win? "win, click to retry!":("retry, score is: " + score));
                     b.setPrefSize(300, 50);
                     b.relocate(200, 340);
 
@@ -244,12 +274,14 @@ public class ekans extends Application {
                     add.setX(headX - 40);
                 }
                 snake.add(0, add);
-
+                removeUnoccupied(new pair((int)headX, (int)headY));
                 layout.getChildren().add(add);
-
                 if (snake.size() > score) {
                    layout.getChildren().remove( snake.get(snake.size() - 1));
+                   Rectangle remove = snake.get(snake.size()-1);
+                    unoccupied.add(new pair((int)remove.getX(), (int)remove.getY()));
                     snake.remove(snake.size() - 1);
+
                 }
             }
         }
