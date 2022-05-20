@@ -23,6 +23,9 @@ import javafx.scene.control.Label;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.scene.layout.VBox;
+import javafx.geometry.Pos;
+import javafx.geometry.Insets;
 
 class pair {
     int a, b;
@@ -81,22 +84,28 @@ public class ekans extends Application {
         Pane layoutStart = new Pane();
         Pane layoutRules = new Pane();
 
-        Scene startScene = new Scene(layoutStart, 40*NumOfTiles, 40*NumOfTiles);
-        Scene gameScene = new Scene(layout, 40*NumOfTiles, 40*NumOfTiles);
-        Scene viewRules = new Scene (layoutRules, 40*NumOfTiles, 40*NumOfTiles);
-
-
-
         Button startGame = new Button("Start Game");
         Button lookAtRules = new Button("View Rules");
         Button backToMenu = new Button("Menu");
+
+        VBox startVBox = new VBox(20, startGame, lookAtRules);
+
+        Scene startScene = new Scene(startVBox, 40*NumOfTiles, 40*NumOfTiles);
+        Scene gameScene = new Scene(layout, 40*NumOfTiles, 40*NumOfTiles);
+        Scene viewRules = new Scene (layoutRules, 40*NumOfTiles, 40*NumOfTiles);
         /*
          * im gonna scream
         */
-
-
+        Text text = new Text();      
+        text.setText("- arrows keys to move \n\n - if the head of the snake hits the edge or itself, game ends. \n\n -There is always 1 apple on the field, which increases snake length by 1. \n\n -once the entire board is filled with the snake, the player wins."); 
+        text.setX(50); 
+        text.setY(50);
+        
         backToMenu.setPrefSize(300, 50);
         backToMenu.relocate(50, 340);
+
+        startVBox.setAlignment(Pos.BOTTOM_CENTER);
+        startVBox.setPadding(new Insets(50));
 
         startGame.setPrefSize(300, 50);
         startGame.relocate(50, 340);
@@ -104,15 +113,14 @@ public class ekans extends Application {
         lookAtRules.setPrefSize(300, 50);
         lookAtRules.relocate(50, 200);
 
+        startVBox.getChildren().add(layoutStart);
 
-        layoutStart.getChildren().add(startGame);
-        layoutStart.getChildren().add(lookAtRules);
+        //layoutStart.getChildren().add(lookAtRules);
+
         layoutRules.getChildren().add(backToMenu);
-        Text text = new Text();      
-        text.setText("-arrows keys to move \n\n - if the head of the snake hits the edge or itself, game ends. \n\n -There is always 1 apple on the field, which increases snake length by 1. \n\n -once the entire board is filled with the snake, the player wins."); 
-        text.setX(50); 
-        text.setY(50);
-        layoutRules.getChildren().addAll(text);
+        layoutRules.getChildren().add(text);
+
+
 
         /*
          * An attempt to create the window in the middle of the screen,
@@ -276,7 +284,7 @@ public class ekans extends Application {
                 snake.add(0, add);
                 removeUnoccupied(new pair((int)headX, (int)headY));
                 layout.getChildren().add(add);
-                if (snake.size() > score) {
+                if (snake.size() > score + 99) {
                    layout.getChildren().remove( snake.get(snake.size() - 1));
                    Rectangle remove = snake.get(snake.size()-1);
                     unoccupied.add(new pair((int)remove.getX(), (int)remove.getY()));
